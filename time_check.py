@@ -2,7 +2,7 @@ from datetime import datetime, time, timedelta
 import pytz
 from db import connect_to_database
 from prometheus_client import Counter
-# from loki_logger import logger
+from loki_logger import logger
 
 INITIAL = time(16,30)
 FINAL = time(6,30)
@@ -24,10 +24,10 @@ def is_in_time_bracket(discord_user_id, msg_timestamp):
     if INITIAL <= msg_time or msg_time <= FINAL:
         return True
     messages_rejected_total_TIME.inc()
-    # logger.warning(
-    #     f"is in time bracket check failed for message sent at : {msg_timestamp} sent by discord_user_id: {discord_user_id} ",
-    #     extra={"tags": {"event": "on_message"}},
-    # )
+    logger.warning(
+        f"is in time bracket check failed for message sent at : {msg_timestamp} sent by discord_user_id: {discord_user_id} ",
+        extra={"tags": {"event": "on_message"}},
+    )
     return False
 
 
@@ -57,10 +57,10 @@ def is_unique_in_time_bracket(discord_user_id, msg_timestamp):
 
     if result[0] > 0:
         messages_rejected_total_DUPLICATE.inc()
-        # logger.warning(
-        #     f"is unique in time bracket check failed for message sent at : {msg_timestamp} sent by discord_user_id: {discord_user_id} ",
-        #     extra={"tags": {"event": "on_message"}},
-        # )
+        logger.warning(
+            f"is unique in time bracket check failed for message sent at : {msg_timestamp} sent by discord_user_id: {discord_user_id} ",
+            extra={"tags": {"event": "on_message"}},
+        )
         return False
     return True
 
@@ -90,10 +90,10 @@ def can_send_message(discord_user_id, msg_sending_time):
 
     if not is_unique_in_time_bracket(discord_user_id, msg_sending_time):
         return False
-    # logger.info(
-    #     f"all time checks passed for message sent at : {msg_sending_time} sent by discord_user_id: {discord_user_id} ",
-    #     extra={"tags": {"event": "on_message"}},
-    # )
+    logger.info(
+        f"all time checks passed for message sent at : {msg_sending_time} sent by discord_user_id: {discord_user_id} ",
+        extra={"tags": {"event": "on_message"}},
+    )
     return True
 
 
