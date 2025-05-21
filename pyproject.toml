@@ -1,7 +1,7 @@
 [project]
 name = "chowkidaar"
 version = "0.1.0"
-description = "Add your description here"
+description = "A lightweight monitoring tool for real-time system and application performance tracking."
 readme = "README.md"
 requires-python = ">=3.12.9"
 dependencies = [
