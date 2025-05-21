@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 # Load env variables from .env file
 load_dotenv()
 DB_URL = os.getenv("NEON_DB_URL")
-DB_URL='postgresql://neondb_owner:npg_3HfDSPRduCB5@ep-jolly-band-a5way1b3-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require'
 def connect_db():
     print(DB_URL)
     try:
@@ -16,11 +15,6 @@ def connect_db():
         print("❌ Failed to connect:", e)
         return None
     
-
-users = {
-    "Krishna Kalra": {f"d{i}": 0 for i in range(1, 16)},
-    "Ujwal Kala": {f"d{i}": 0 for i in range(1, 16)},
-}
 
 
 def check_lc(question_id, leetcode_submissions):

@@ -7,14 +7,14 @@ import os
 with open(os.path.join(os.path.dirname(__file__), "questions.json"), "r") as file:
     questions = json.load(file)
 
-def cpLogs(messageId,studentId,usernameCF,usernameLC,realName,day):
+def cpLogs(studentId,usernameCF,usernameLC,realName,day):
     leetcodeSubmission=get_leetcode_recent_submissions(usernameLC)
     codeforcesSubmission=get_codeforces_recent_submissions(usernameCF)
     questionOfDay=questions[day]
     print(questionOfDay)
-    mark_db(messageId,studentId,questionOfDay,realName,leetcodeSubmission,codeforcesSubmission,day)
+    mark_db(studentId,questionOfDay,realName,leetcodeSubmission,codeforcesSubmission,day)
 
 
 
 #cpLogs('B123067','_MShadow_','krishna26kalra','Krishna Kalra','d2')
-delete_db('B123067','d2')
+#delete_db('B123067','d2')
