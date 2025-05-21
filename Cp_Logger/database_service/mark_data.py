@@ -32,7 +32,7 @@ def check_lc(question_id, leetcode_submissions):
 
 def check_cf(question_id, codeforces_submissions):
     for sub in codeforces_submissions:
-        if str(sub.get("id")) == str(question_id):
+        if str(sub.get("id")) == str(question_id) and sub.get('verdict')=='OK':
             return True
     return False
 
