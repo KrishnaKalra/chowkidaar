@@ -13,7 +13,7 @@ dependencies = [
     "attrs==23.2.0",
     "certifi==2024.2.2",
     "click==8.1.7",
-    "discord-py==2.3.2",
+    "discord.py==2.3.2",
     "dnspython==2.6.1",
     "email-validator==2.1.1",
     "exceptiongroup==1.2.1",
