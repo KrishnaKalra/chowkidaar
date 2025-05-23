@@ -1,8 +1,7 @@
 from datetime import datetime, time, timedelta
-import pytz
-from db import connect_to_database
+from db.db import connect_to_database
 from prometheus_client import Counter
-from loki_logger import logger
+from utils.loki_logger import logger
 
 INITIAL = time(16,30)
 FINAL = time(6,30)

@@ -1,6 +1,4 @@
-import re
-import time
-from dfa import IdentityAutomata
+from utils.dfa import IdentityAutomata
 
 def extract_user_info(msg: str):
     machine = IdentityAutomata()
@@ -58,6 +56,10 @@ Day 24:
     '''
 ]
 
+def extract_user_leetcode_id(msg: str):
+    """
+    @help needed
+    """
 
 if __name__ == "__main__":
     for msg in messages:

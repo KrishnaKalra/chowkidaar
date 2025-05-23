@@ -1,6 +1,6 @@
 import psycopg2
 from config import DATABASE_NAME, DATABASE_USER, DATABASE_PASSWORD, DATABASE_HOST
-from parse_message import extract_user_info
+from utils.parse_message import extract_user_info
 import pytz
 import datetime
 from prometheus_client import Counter
@@ -122,6 +122,10 @@ def check_intext_validity( message):
         cur.close() 
         conn.close()
     
+def cp_logger():
+    """
+    @krishna start adding the DB related stuff here of the cp_logger
+    """
 
 if __name__ == "__main__":
     print(check_intext_validity( ""))
