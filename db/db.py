@@ -96,7 +96,7 @@ def delete_log(discord_message_id):
         cur.close()
         conn.close()
 
-def check_intext_validity( message):
+def check_intext_validity(message):
     conn = connect_to_database()
     cur = conn.cursor()
     try: 
@@ -121,11 +121,6 @@ def check_intext_validity( message):
     finally:
         cur.close() 
         conn.close()
-    
-def cp_logger():
-    """
-    @krishna start adding the DB related stuff here of the cp_logger
-    """
 
 if __name__ == "__main__":
     print(check_intext_validity( ""))

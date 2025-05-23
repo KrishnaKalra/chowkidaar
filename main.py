@@ -46,8 +46,11 @@ async def on_message(message):
     discord_message_id = message.id
     content = str(message.content)
     timestamp = message.created_at
-    in_text_valid = check_intext_validity(content)
+    in_text_valid = check_intext_validity(content) # so on_message -> check_intext_validity -> checks in student_list_2024 -> return 0/1/-1
     logger.info(f"Received Message from discord_user_id {discord_user_id}",extra={"tags": {"event": "on_message"}})
+    """
+    We have to check the DSA/CP part here!
+    """
     try:
         if can_send_message(discord_user_id, timestamp):
             logger.info(f"discord_message_id :{discord_message_id} can be stored in DB.",extra={"tags": {"event": "on_message"}})
@@ -90,7 +93,9 @@ async def on_message_edit(old_message, new_message):
     timestamp = new_message.created_at
     updated_at = new_message.edited_at
     in_text_valid = check_intext_validity(content)
-
+    """
+    We have to check the DSA/CP part here!
+    """
     logger.info(f"Edit event from {discord_user_id} for message id: { discord_message_id} received.",extra={"tags": {"event": "on_message_edit"}})
     try:
         if is_in_time_bracket(discord_user_id,timestamp) and update_log(discord_message_id, content, in_text_valid, updated_at):
