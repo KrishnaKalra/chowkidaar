@@ -46,53 +46,85 @@ async def on_message(message):
     discord_message_id = message.id
     content = str(message.content)
     timestamp = message.created_at
-    in_text_valid = check_intext_validity(content)
     logger.info(f"Received Message from discord_user_id {discord_user_id}",extra={"tags": {"event": "on_message"}})
 
     try:
         # Process CP submissions
         cp_result = process_submissions(content)
-        daily_goal_status = len(cp_result['solved_questions'])/(cp_result['total_questions'])
-        if cp_result and "error" not in cp_result and daily_goal_status == 1:
-            logger.info(f"CP submissions processed successfully for user {discord_user_id}.", extra={"tags": {"event": "on_message"}})
-            logger.info(f"{discord_user_id} has completed all the questions", extra={"tags": {"event": "on_message"}})
-            await message.add_reaction("✅")
-            logger.info(f"Added ✅ reaction", extra={"tags": {"event": "on_message"}})
-        elif cp_result and "error" not in cp_result and daily_goal_status < 1 and daily_goal_status != 0:
-            logger.info(f"CP submissions processed successfully for user {discord_user_id}.", extra={"tags": {"event": "on_message"}})
-            logger.info(f"{discord_user_id} has partially completed the questions", extra={"tags": {"event": "on_message"}})
-            await message.add_reaction("⏳")
-            logger.info(f"Added ⏳ reaction", extra={"tags": {"event": "on_message"}})
-        elif cp_result and daily_goal_status == 0:
-            logger.info(f"No CP submissions for user {discord_user_id}.", extra={"tags": {"event": "on_message"}})
-            logger.info(f"{discord_user_id} has no submissions", extra={"tags": {"event": "on_message"}})
-            await message.add_reaction("❌")
-            logger.info(f"Added ❌ reaction", extra={"tags": {"event": "on_message"}})
-
-        elif cp_result and "error" in cp_result:
-            logger.warning(f"CP processing error: {cp_result['error']}", extra={"tags": {"event": "on_message"}})
-            await message.add_reaction("⚠️")
-            logger.info(f"Added ⚠️  reaction", extra={"tags": {"event": "on_message"}})
-
-        if can_send_message(discord_user_id, timestamp):
-            logger.info(f"discord_message_id :{discord_message_id} can be stored in DB.",extra={"tags": {"event": "on_message"}})
+        
+        # Handle registration message
+        if cp_result and "status" in cp_result and cp_result["status"] == "success" and "message" in cp_result and "registered" in cp_result["message"].lower():
+            logger.info(f"User registration successful for {discord_user_id}.")
+            logger.info(f"Added 📝 reaction for successful registration")
+            await message.add_reaction("📝")
+            
+            # Save registration message to database without validity check
             save_log(
                 content,
                 discord_user_id,
                 discord_message_id,
                 timestamp,
-                in_text_valid,
+                1,
             )
-            logger.info(f"Message from {message.author.name} saved to the database.",extra={"tags": {"event": "on_message"}})
-            print(f"Message from {message.author.name} saved to the database.")
-            await message.add_reaction("🎊")
-            logger.info(f"Reaction 🎊 added to discord_user_id: {discord_user_id} for message id:{ discord_message_id}  successfully.",extra={"tags": {"event": "on_message"}})
-            messages_sent_total.inc()   
-        else:
-            logger.warning(f"Message from {message.author.name} could not be saved to the database.",extra={"tags": {"event": "on_message"}})
-            print(f"Message from {message.author.name} could not be saved to the database.")
-            await message.add_reaction("👁️")
-            logger.info(f"Reaction 👁️ added to discord_user_id: {discord_user_id} for message id:{ discord_message_id}  successfully.",extra={"tags": {"event": "on_message"}})
+            logger.info(f"Registration message from {message.author.name} saved to the database.",extra={"tags": {"event": "on_message"}})
+            await message.add_reaction("✔")
+            messages_sent_total.inc()
+        
+        # Handle daily log message
+        elif cp_result and "status" in cp_result and cp_result["status"] == "success":
+            in_text_valid = check_intext_validity(content)
+            daily_goal_status = len(cp_result['solved_questions'])/(cp_result['total_questions'])
+            
+            if daily_goal_status == 1:
+                logger.info(f"CP submissions processed successfully for user {discord_user_id}.", extra={"tags": {"event": "on_message"}})
+                logger.info(f"{discord_user_id} has completed all the questions", extra={"tags": {"event": "on_message"}})
+                await message.add_reaction("✅")
+                logger.info(f"Added ✅ reaction", extra={"tags": {"event": "on_message"}})
+            elif daily_goal_status < 1 and daily_goal_status != 0:
+                logger.info(f"CP submissions processed successfully for user {discord_user_id}.", extra={"tags": {"event": "on_message"}})
+                logger.info(f"{discord_user_id} has partially completed the questions", extra={"tags": {"event": "on_message"}})
+                await message.add_reaction("⏳")
+                logger.info(f"Added ⏳ reaction", extra={"tags": {"event": "on_message"}})
+            elif daily_goal_status == 0:
+                logger.info(f"No CP submissions for user {discord_user_id}.", extra={"tags": {"event": "on_message"}})
+                logger.info(f"{discord_user_id} has no submissions", extra={"tags": {"event": "on_message"}})
+                await message.add_reaction("❌")
+                logger.info(f"Added ❌ reaction", extra={"tags": {"event": "on_message"}})
+
+            # Check message validity and save to database only for daily logs
+            if can_send_message(discord_user_id, timestamp):
+                logger.info(f"discord_message_id :{discord_message_id} can be stored in DB.",extra={"tags": {"event": "on_message"}})
+                save_log(
+                    content,
+                    discord_user_id,
+                    discord_message_id,
+                    timestamp,
+                    in_text_valid,
+                )
+                logger.info(f"Message from {message.author.name} saved to the database.",extra={"tags": {"event": "on_message"}})
+                print(f"Message from {message.author.name} saved to the database.")
+                await message.add_reaction("🎊")
+                logger.info(f"Reaction 🎊 added to discord_user_id: {discord_user_id} for message id:{ discord_message_id}  successfully.",extra={"tags": {"event": "on_message"}})
+                messages_sent_total.inc()   
+            else:
+                logger.warning(f"Message from {message.author.name} could not be saved to the database.",extra={"tags": {"event": "on_message"}})
+                print(f"Message from {message.author.name} could not be saved to the database.")
+                await message.add_reaction("👁️")
+                logger.info(f"Reaction 👁️ added to discord_user_id: {discord_user_id} for message id:{ discord_message_id}  successfully.",extra={"tags": {"event": "on_message"}})
+        
+        # Handle errors
+        elif cp_result and "error" in cp_result:
+            error_msg = cp_result['error']
+            logger.warning(f"CP processing error: {error_msg}", extra={"tags": {"event": "on_message"}})
+            
+            # Different reactions for different types of errors
+            if "not registered" in error_msg.lower() or "handle not found" in error_msg.lower():
+                await message.add_reaction("📝")  # Registration needed
+                logger.info(f"Added 📝 reaction for registration needed", extra={"tags": {"event": "on_message"}})
+            else:
+                await message.add_reaction("⚠️")  # Other errors
+                logger.info(f"Added ⚠️ reaction for other errors", extra={"tags": {"event": "on_message"}})
+
     except Exception as e:
         logger.error(f"Error processing message: {e}",extra={"tags": {"event": "on_message"}})
         print(f"Error processing message: {e}")

@@ -1,4 +1,5 @@
 from utils.dfa import IdentityAutomata
+import re
 
 def extract_user_info(msg: str):
     """
@@ -12,16 +13,26 @@ def extract_user_info(msg: str):
     """
     machine = IdentityAutomata()
     msg = msg.lower()
-    tokens = msg.split()
     
     # Extract name (first line)
     name = msg.split('\n')[0].strip()
     
-    # Extract user ID
-    potentialIds = [word for word in tokens if word[0] == 'b']
-    for college_id in potentialIds:
-        if machine.is_accepted(college_id[1:]):
-            return college_id, name
+    # Extract user ID - look for both formats
+    # Format 1: "ID: B123456" or "ID - B123456"
+    # Format 2: "B123456" directly
+    id_patterns = [
+        r'id:\s*([bB]\d+)',  # Format 1 with colon
+        r'id\s*-\s*([bB]\d+)',  # Format 1 with dash
+        r'([bB]\d+)'  # Format 2 direct ID
+    ]
+    
+    for pattern in id_patterns:
+        match = re.search(pattern, msg)
+        if match:
+            college_id = match.group(1)
+            if machine.is_accepted(college_id[1:]):
+                return college_id, name
+                
     return None, None
 
 def extract_user_lc_cf_id(msg: str):
@@ -33,15 +44,35 @@ def extract_user_lc_cf_id(msg: str):
         dict: A dictionary containing 'lc' and 'cf' keys with their respective IDs
     """
     msg = msg.lower()
-    tokens = msg.split()
     
     result = {'lc': None, 'cf': None}
     
-    for token in tokens:
-        if token.startswith('lc-'):
-            result['lc'] = token[3:]  # Remove 'lc-' prefix
-        elif token.startswith('cf-'):
-            result['cf'] = token[3:]  # Remove 'cf-' prefix
+    # Look for both formats
+    # Format 1: "LC: username" or "LC - username"
+    # Format 2: "lc-username"
+    lc_patterns = [
+        r'lc:\s*(\w+)',
+        r'lc\s*-\s*(\w+)',
+        r'lc-(\w+)'
+    ]
+    
+    cf_patterns = [
+        r'cf:\s*(\w+)',
+        r'cf\s*-\s*(\w+)',
+        r'cf-(\w+)'
+    ]
+    
+    for pattern in lc_patterns:
+        match = re.search(pattern, msg)
+        if match:
+            result['lc'] = match.group(1)
+            break
+            
+    for pattern in cf_patterns:
+        match = re.search(pattern, msg)
+        if match:
+            result['cf'] = match.group(1)
+            break
             
     return result
 
@@ -67,6 +98,20 @@ def extract_day_number(msg: str) -> int:
             except ValueError:
                 continue
     return None
+
+def is_registration_message(msg: str) -> bool:
+    """
+    Check if a message is a registration message.
+    A registration message must contain both LC and CF handles.
+    
+    Args:
+        msg (str): The message to check
+        
+    Returns:
+        bool: True if it's a registration message, False otherwise
+    """
+    platform_ids = extract_user_lc_cf_id(msg)
+    return platform_ids['lc'] is not None and platform_ids['cf'] is not None
 
 # Test messages
 messages = [

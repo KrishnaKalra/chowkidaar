@@ -203,5 +203,56 @@ def check_intext_validity(message):
         cur.close() 
         conn.close()
 
+def register_user(student_id: str, name: str, lc_handle: str, cf_handle: str) -> bool:
+    """
+    Register a new user or update their handles.
+    
+    Args:
+        student_id (str): The student's ID
+        name (str): The student's full name
+        lc_handle (str): The student's LeetCode handle
+        cf_handle (str): The student's CodeForces handle
+        
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    try:
+        conn = connect_to_database()
+        if not conn:
+            return False
+            
+        with conn.cursor() as cur:
+            # Check if user exists
+            cur.execute('SELECT * FROM student_list_2024 WHERE stu_id = %s', (student_id,))
+            user = cur.fetchone()
+            
+            if user:
+                # Update existing user
+                cur.execute('''
+                    UPDATE student_list_2024 
+                    SET name = %s, lc_handle = %s, cf_handle = %s
+                    WHERE stu_id = %s
+                ''', (name, lc_handle, cf_handle, student_id))
+            else:
+                # Insert new user
+                cur.execute('''
+                    INSERT INTO student_list_2024 
+                    (stu_id, name, lc_handle, cf_handle, q1, q2, q3, total_solved)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                ''', (student_id, name, lc_handle, cf_handle, [], [], [], 0))
+                
+            conn.commit()
+            total_db_operations.inc()
+            return True
+            
+    except Exception as e:
+        print(f"Error registering user: {e}")
+        if conn:
+            conn.rollback()
+        return False
+    finally:
+        if conn:
+            conn.close()
+
 if __name__ == "__main__":
     print(check_intext_validity(""))
