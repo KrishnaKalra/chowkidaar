@@ -22,13 +22,3 @@ DATABASE_NAME = os.getenv('DATABASE_NAME')
 DATABASE_USER = os.getenv('DATABASE_USER')
 DATABASE_PASSWORD = os.getenv('DATABASE_PASSWORD')
 DATABASE_HOST = os.getenv('DATABASE_HOST')
-
-
-if __name__ == "__main__":
-    print("Using environment:", environment)
-    print("DISCORD_TOKEN:", DISCORD_TOKEN)
-    print("WATCHED_CHANNEL_ID:", WATCHED_CHANNEL_ID)
-    print("DATABASE_NAME:", DATABASE_NAME)
-    print("DATABASE_USER:", DATABASE_USER)
-    print("DATABASE_PASSWORD:", DATABASE_PASSWORD)
-    print("DATABASE_HOST:", DATABASE_HOST)
