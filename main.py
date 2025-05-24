@@ -4,7 +4,7 @@ from discord.ext import commands
 from db.db import save_log, check_intext_validity, update_log, delete_log
 from utils.time_check import can_send_message, is_in_time_bracket
 from prometheus_client import Counter , Gauge, start_http_server
-from utils.loki_logger import logger
+import logging as logger
 from db.mark_cp_logs import process_submissions  # Add CP processing import
 
 intents = discord.Intents.default()

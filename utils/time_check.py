@@ -40,7 +40,7 @@ def is_unique_in_time_bracket(discord_user_id, msg_timestamp):
         """
         SELECT COUNT(*)
         FROM participation_logs
-        WHERE discord_user_id = %s
+        WHERE discord_user_id = '%s'
         AND sent_at >= %s
         AND sent_at < %s
         AND deleted_at IS NULL

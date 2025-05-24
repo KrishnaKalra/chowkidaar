@@ -1,10 +1,9 @@
-from platforms.leetcode import get_leetcode_recent_submissions
-from platforms.codeforces import get_codeforces_recent_submissions
+from db.platforms.leetcode import get_leetcode_recent_submissions
+from db.platforms.codeforces import get_codeforces_recent_submissions
 from db.db import save_cp_log, delete_cp_log
 from utils.parse_message import extract_user_info, extract_user_lc_cf_id, extract_day_number
 import json
 import os
-from db.mark_cp_logs import process_submissions
 
 # Load questions configuration
 QUESTIONS_FILE = os.path.join(os.path.dirname(__file__), "questions.json")

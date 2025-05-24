@@ -16,30 +16,18 @@ total_db_operations = Counter('total_db_operations', 'Count of total database op
 def connect_to_database():
     """Central database connection function that tries both connection methods"""
     try:
-        # Try Neon DB first
         if DB_URL:
-            conn = psycopg2.connect(DB_URL)
-            print("✅ Connected to Neon DB successfully.")
-            return conn
-    except Exception as e:
-        print(f"Failed to connect to Neon DB: {e}")
-    
-    try:
-        # Fallback to traditional connection
-        conn = psycopg2.connect(
-            dbname=DATABASE_NAME,
-            user=DATABASE_USER,
-            password=DATABASE_PASSWORD,
-            host=DATABASE_HOST,
-            port=5432
-        )
-        print("Connection to the database was successful")
-        return conn
+            try:
+                conn = psycopg2.connect(DB_URL)
+                print("✅ Connected to Neon DB successfully.")
+                return conn
+            except Exception as e:
+                print(f"Failed to connect to Neon DB: {e}")
+
     except psycopg2.Error as e:
         print(f"Error connecting to the database: {e}")
         return None
 
-# Participation logs related functions
 def save_log(message, discord_user_id, discord_message_id, sent_at, in_text_valid=-1):
     try:
         conn = connect_to_database()
@@ -128,10 +116,10 @@ def save_cp_log(student_id, name, questions, leetcode_submissions, codeforces_su
 
     with conn.cursor() as cur:
         # Make sure user exists
-        cur.execute('SELECT * FROM "cpLogs" WHERE "studentId" = %s;', (student_id,))
+        cur.execute('SELECT * FROM "student_list_2024" WHERE "stu_id" = %s;', (student_id,))
         if cur.fetchone() is None:
             cur.execute(
-                'INSERT INTO "cpLogs" ("studentId", "Name", "Question 1", "Question 2", "Question 3", "Total Solved") VALUES (%s, %s, %s, %s, %s, %s);',
+                'INSERT INTO "student_list_2024" ("stu_id", "name", "q1", "q2", "q3", "total_solved") VALUES (%s, %s, %s, %s, %s, %s);',
                 (student_id, name, [], [], [], 0)
             )
             conn.commit()
@@ -140,10 +128,10 @@ def save_cp_log(student_id, name, questions, leetcode_submissions, codeforces_su
         for idx in solved:
             field = f"Question {idx + 1}"
             cur.execute(f'''
-                UPDATE "cpLogs"
+                UPDATE "student_list_2024"
                 SET "{field}" = array_append("{field}", %s),
-                    "Total Solved" = "Total Solved" + 1
-                WHERE "studentId" = %s AND NOT (%s = ANY("{field}"));
+                    "total_solved" = "total_solved" + 1
+                WHERE "stu_id" = %s AND NOT (%s = ANY("{field}"));
             ''', (day, student_id, day))
 
         conn.commit()
@@ -156,21 +144,21 @@ def delete_cp_log(student_id, day):
         return
 
     with conn.cursor() as cur:
-        fields = ["Question 1", "Question 2", "Question 3"]
+        fields = ["q1", "q2", "q3"]
         count_removed = 0
 
         for field in fields:
             cur.execute(f"""
-                SELECT "{field}" FROM "cpLogs" WHERE "studentId" = %s;
+                SELECT "{field}" FROM "student_list_2024" WHERE "stu_id" = %s;
             """, (student_id,))
             result = cur.fetchone()
 
             if result and day in result[0]:
                 cur.execute(f"""
-                    UPDATE "cpLogs"
+                    UPDATE "student_list_2024"
                     SET "{field}" = array_remove("{field}", %s),
-                        "Total Solved" = "Total Solved" - 1
-                    WHERE "studentId" = %s;
+                        "total_solved" = "total_solved" - 1
+                    WHERE "stu_id" = %s;
                 """, (day, student_id))
                 count_removed += 1
 
@@ -186,12 +174,18 @@ def get_ist_time():
 
 def check_intext_validity(message):
     conn = connect_to_database()
+    if not conn:
+        print("Failed to connect to database for intext validity check")
+        return -1
+        
     cur = conn.cursor()
     try: 
-        college_id = extract_user_info(message)
+        college_id = extract_user_info(message)[0]
+        print("Here is your college id", college_id)
         if college_id:
-            cur.execute("SELECT name FROM student_list_2023 WHERE student_id = %s", (college_id.upper(),))
+            cur.execute("SELECT name FROM student_list_2024 WHERE stu_id=%s", (college_id,))
             full_name = cur.fetchone()
+            print("FUll name is  => ", full_name)
             total_db_operations.inc()
             if full_name:
                 first_name = full_name[0].split()[0]
