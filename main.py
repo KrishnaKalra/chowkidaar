@@ -5,6 +5,8 @@ from db.db import save_log, check_intext_validity, update_log, delete_log
 from utils.time_check import can_send_message, is_in_time_bracket
 from prometheus_client import Counter , Gauge, start_http_server
 from utils.loki_logger import logger
+from db.mark_cp_logs import process_submissions  # Add CP processing import
+
 intents = discord.Intents.default()
 intents.messages = True  # Ensure the bot can read messages
 intents.message_content = True  # Add this line if you need access to message content
@@ -13,7 +15,6 @@ bot.activity = discord.Activity(type=discord.ActivityType.watching, name="for me
 
 message_new_attempts_total= Counter('discord_messages_new_attempts_total', 'Total number of new messages received')
 message_new_edits_total= Counter('discord_messages_new_edit_attempts_total', 'Total number of patch request received')
-
 
 messages_sent_total = Counter('discord_messages_sent_total', 'Total number of messages saved in DB')
 messages_edited_total = Counter('discord_messages_edited_total', 'Total number of messages patched in DB')
@@ -30,7 +31,6 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-
     message_new_attempts_total.inc()
     if message.author == bot.user:
         return
@@ -46,12 +46,20 @@ async def on_message(message):
     discord_message_id = message.id
     content = str(message.content)
     timestamp = message.created_at
-    in_text_valid = check_intext_validity(content) # so on_message -> check_intext_validity -> checks in student_list_2024 -> return 0/1/-1
+    in_text_valid = check_intext_validity(content)
     logger.info(f"Received Message from discord_user_id {discord_user_id}",extra={"tags": {"event": "on_message"}})
-    """
-    We have to check the DSA/CP part here!
-    """
+
     try:
+        # Process CP submissions
+        cp_result = process_submissions(content)
+        if cp_result and "error" not in cp_result:
+            logger.info(f"CP submissions processed successfully for user {discord_user_id}", extra={"tags": {"event": "on_message"}})
+            if cp_result["solved_questions"]:
+                await message.add_reaction("✅")
+                logger.info(f"Added ✅ reaction for solved CP questions", extra={"tags": {"event": "on_message"}})
+        elif cp_result and "error" in cp_result:
+            logger.warning(f"CP processing error: {cp_result['error']}", extra={"tags": {"event": "on_message"}})
+
         if can_send_message(discord_user_id, timestamp):
             logger.info(f"discord_message_id :{discord_message_id} can be stored in DB.",extra={"tags": {"event": "on_message"}})
             save_log(
@@ -72,8 +80,8 @@ async def on_message(message):
             await message.add_reaction("👁️")
             logger.info(f"Reaction 👁️ added to discord_user_id: {discord_user_id} for message id:{ discord_message_id}  successfully.",extra={"tags": {"event": "on_message"}})
     except Exception as e:
-        logger.error(f"Error saving message to database: {e}",extra={"tags": {"event": "on_message"}})
-        print(f"Error saving message to database: {e}")
+        logger.error(f"Error processing message: {e}",extra={"tags": {"event": "on_message"}})
+        print(f"Error processing message: {e}")
         errors_encountered_total.inc()
     await bot.process_commands(message)
     
@@ -93,11 +101,19 @@ async def on_message_edit(old_message, new_message):
     timestamp = new_message.created_at
     updated_at = new_message.edited_at
     in_text_valid = check_intext_validity(content)
-    """
-    We have to check the DSA/CP part here!
-    """
+
     logger.info(f"Edit event from {discord_user_id} for message id: { discord_message_id} received.",extra={"tags": {"event": "on_message_edit"}})
     try:
+        # Process CP submissions for edited message
+        cp_result = process_submissions(content)
+        if cp_result and "error" not in cp_result:
+            logger.info(f"CP submissions processed successfully for edited message from user {discord_user_id}", extra={"tags": {"event": "on_message_edit"}})
+            if cp_result["solved_questions"]:
+                await new_message.add_reaction("✅")
+                logger.info(f"Added ✅ reaction for solved CP questions in edited message", extra={"tags": {"event": "on_message_edit"}})
+        elif cp_result and "error" in cp_result:
+            logger.warning(f"CP processing error in edited message: {cp_result['error']}", extra={"tags": {"event": "on_message_edit"}})
+
         if is_in_time_bracket(discord_user_id,timestamp) and update_log(discord_message_id, content, in_text_valid, updated_at):
             logger.info(f"Edit event from discord_user_id:{discord_user_id} for message id:{ discord_message_id} successfully patched in DB.",extra={"tags": {"event": "on_message_edit"}})
             
@@ -112,7 +128,6 @@ async def on_message_edit(old_message, new_message):
             logger.warning(f"Reaction 👀 added to discord_user_id: {discord_user_id} for message id: {discord_message_id} successfully.",extra={"tags": {"event": "on_message_edit"}})
    
     except Exception as e:
-        
         logger.error(f"Error updating message in database: {e}",extra={"tags": {"event": "on_message_edit"}})
         print(f"Error updating message in database: {e}")
         errors_encountered_total.inc()
@@ -121,7 +136,6 @@ async def on_message_edit(old_message, new_message):
 
 @bot.event
 async def on_message_delete(message):
-
     if message.author == bot.user:
         return
     if message.channel.id != WATCHED_CHANNEL_ID:
