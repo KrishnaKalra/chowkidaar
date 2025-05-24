@@ -52,13 +52,27 @@ async def on_message(message):
     try:
         # Process CP submissions
         cp_result = process_submissions(content)
-        if cp_result and "error" not in cp_result:
-            logger.info(f"CP submissions processed successfully for user {discord_user_id}", extra={"tags": {"event": "on_message"}})
-            if cp_result["solved_questions"]:
-                await message.add_reaction("✅")
-                logger.info(f"Added ✅ reaction for solved CP questions", extra={"tags": {"event": "on_message"}})
+        daily_goal_status = len(cp_result['solved_questions'])/(cp_result['total_questions'])
+        if cp_result and "error" not in cp_result and daily_goal_status == 1:
+            logger.info(f"CP submissions processed successfully for user {discord_user_id}.", extra={"tags": {"event": "on_message"}})
+            logger.info(f"{discord_user_id} has completed all the questions", extra={"tags": {"event": "on_message"}})
+            await message.add_reaction("✅")
+            logger.info(f"Added ✅ reaction", extra={"tags": {"event": "on_message"}})
+        elif cp_result and "error" not in cp_result and daily_goal_status < 1 and daily_goal_status != 0:
+            logger.info(f"CP submissions processed successfully for user {discord_user_id}.", extra={"tags": {"event": "on_message"}})
+            logger.info(f"{discord_user_id} has partially completed the questions", extra={"tags": {"event": "on_message"}})
+            await message.add_reaction("⏳")
+            logger.info(f"Added ⏳ reaction", extra={"tags": {"event": "on_message"}})
+        elif cp_result and daily_goal_status == 0:
+            logger.info(f"No CP submissions for user {discord_user_id}.", extra={"tags": {"event": "on_message"}})
+            logger.info(f"{discord_user_id} has no submissions", extra={"tags": {"event": "on_message"}})
+            await message.add_reaction("❌")
+            logger.info(f"Added ❌ reaction", extra={"tags": {"event": "on_message"}})
+
         elif cp_result and "error" in cp_result:
             logger.warning(f"CP processing error: {cp_result['error']}", extra={"tags": {"event": "on_message"}})
+            await message.add_reaction("⚠️")
+            logger.info(f"Added ⚠️  reaction", extra={"tags": {"event": "on_message"}})
 
         if can_send_message(discord_user_id, timestamp):
             logger.info(f"discord_message_id :{discord_message_id} can be stored in DB.",extra={"tags": {"event": "on_message"}})
