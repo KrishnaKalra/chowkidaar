@@ -1,8 +1,7 @@
 from datetime import datetime, time, timedelta
-import pytz
-from db import connect_to_database
+from db.db import connect_to_database
 from prometheus_client import Counter
-from loki_logger import logger
+from utils.loki_logger import logger
 
 INITIAL = time(16,30)
 FINAL = time(6,30)
@@ -41,7 +40,7 @@ def is_unique_in_time_bracket(discord_user_id, msg_timestamp):
         """
         SELECT COUNT(*)
         FROM participation_logs
-        WHERE discord_user_id = %s
+        WHERE discord_user_id = '%s'
         AND sent_at >= %s
         AND sent_at < %s
         AND deleted_at IS NULL

@@ -34,6 +34,7 @@ bower_components
 
 # node-waf configuration
 .lock-wscript
+**/questions.json
 
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release
@@ -131,7 +132,7 @@ dist
 .pnp.*
 
 chowkidaar
-__pycache__
+**/__pycache__/*
 list.csv
 
 # Python-generated files
