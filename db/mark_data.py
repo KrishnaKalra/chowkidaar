@@ -18,15 +18,17 @@ def connect_db():
 
 
 def check_lc(question_id, leetcode_submissions):
+    """Check if a LeetCode question is solved"""
     for sub in leetcode_submissions:
-        if str(sub.get("id")) == str(question_id):
+        if str(sub.get("titleSlug")) == str(question_id):
             return True
     return False
 
-
 def check_cf(question_id, codeforces_submissions):
+    """Check if a CodeForces question is solved"""
     for sub in codeforces_submissions:
-        if str(sub.get("id")) == str(question_id) and sub.get('verdict')=='OK':
+        sub_question_id=str(sub.get('problem').get('contestId'))+sub.get('problem').get('index')
+        if str(sub_question_id) == str(question_id) and sub.get('verdict')=='OK':
             return True
     return False
 
